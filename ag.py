@@ -65,21 +65,26 @@ def matingPool(population, ranks):
 
 #check if crossover happens, then calculate crossover point
 def crossover(sol_string1, sol_string2, crossover_prob):
+    # p = np.random.random()
+    # print(p, p < crossover_prob)
     if np.random.random() < crossover_prob:
-        cross_point = np.random.randint(9) * 9
+        cross_point = np.random.randint(1,9) * 9
         new_sol_string1 = np.concatenate((sol_string1[:cross_point], sol_string2[cross_point:]))
         new_sol_string2 = np.concatenate((sol_string2[:cross_point], sol_string1[cross_point:]))
+        # print('Crossover: \n', new_sol_string1.reshape(9,9), new_sol_string2.reshape(9,9))
         return new_sol_string1, new_sol_string2
     return sol_string1, sol_string2
 
 def mutation(initial_grid, sol_string, mutation_prob):
     m_sol_string = sol_string.copy()
-    i = np.random.randint(9)
-    if np.random.random() < mutation_prob:
-        s1,s2 = tuple(np.random.randint(9, size=2))
-        while initial_grid[s1*i] != 0 or initial_grid[s2*i] != 0:
+    # i = np.random.randint(9)
+    for i in range(9):
+        if np.random.random() < mutation_prob:
             s1,s2 = tuple(np.random.randint(9, size=2))
-        m_sol_string[s1*i], m_sol_string[s2*i] = m_sol_string[s2*i], m_sol_string[s1*i]
+            while initial_grid[s1*i] != 0 or initial_grid[s2*i] != 0:
+                s1,s2 = tuple(np.random.randint(9, size=2))
+            m_sol_string[s1*i], m_sol_string[s2*i] = m_sol_string[s2*i], m_sol_string[s1*i]
+            # print('Mutation: \n', m_sol_string.reshape(9,9))
     return m_sol_string
 
 def rankPopulation(population):
@@ -91,7 +96,7 @@ def rankPopulation(population):
 
 def main():
     NGENS = 100
-    POPSIZE = 1000
+    POPSIZE = 10000
     MUTATION_RATE = 0.1
     CROSSOVER_RATE = 0.85
 
@@ -112,6 +117,8 @@ def main():
     printBoard(initial_grid)
     previous_score = np.inf
     for gen in range(NGENS):
+        # for p in population:
+        #     print(p.reshape(9,9))
         #rank population by fitness function
         fitness_table = rankPopulation(population)
         best_population = population.copy()
@@ -123,18 +130,18 @@ def main():
             print('\n\nBest Solution:')
             printBoard(population[p.argmin(fitness_table)])
             break
-        print("Generation: %d: best score: %d, worst score: %d" % (gen, best_result, worst_result))
 
         #apply mutation and crossover to generate next gen population
         pairs = np.random.permutation(np.arange(POPSIZE)).reshape(np.int(POPSIZE/2), 2)
         new_pop = population.copy()
         for pair in pairs:
             p1,p2 = tuple(pair)
-            new_pop[p1], new_pop[p2] = crossover(new_pop[p1], new_pop[p2], MUTATION_RATE)
+            new_pop[p1], new_pop[p2] = crossover(new_pop[p1], new_pop[p2], CROSSOVER_RATE)
         for i, sol in enumerate(new_pop):
             new_pop[i] = mutation(initial_grid, sol, MUTATION_RATE)
         population = matingPool(new_pop.copy(), np.array([fitnessFunction(sol) for sol in new_pop]))
 
+        print("Generation: %d: best score: %d, worst score: %d" % (gen, best_result, worst_result))
     print('\n\nBest Solution:')
     printBoard(best_population[np.argmin(fitness_table)])
 
